@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}User {{user.username}}{% endblock %}
+
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+<p>User: <a href="mailto:{{user.email}}"><b>{{user.username}}</b></a></p>
+<ul>
+{% for receipt in receipts %}
+<li>{{receipt.time}} &ndash; <a href="{{url_for('view_receipt', receipt_id=receipt.id)}}">{{receipt.name}}</a></li>
+{% endfor %}
+</ul>
+{% endblock %}

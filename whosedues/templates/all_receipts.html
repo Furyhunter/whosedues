@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Receipts{% endblock %}
+
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+<table>
+<tr>
+	<th>User</th>
+	<th>Name</th>
+	<th>Total</th>
+	<th>Time</th>
+</tr>
+{% for receipt in receipts %}
+<tr>
+	<td><a href="{{url_for('view_user', userid=receipt.user.id)}}">{{receipt.user.username}}</a></td>
+	<td><a href="{{url_for('view_receipt', receipt_id=receipt.id)}}">{{receipt.name}}</a></td>
+	<td>{{receipt.amount|currency}}</td>
+	<td>{{receipt.time}}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}

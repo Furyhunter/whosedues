@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Receipt "{{receipt.name}}"{% endblock %}
+
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+<p>Total: {{receipt.amount|currency}}</p>
+<p>Dues:</p>
+<form action="{{url_for('delete_receipt', receipt_id=receipt.id)}}">
+<button type="submit">Delete</button>
+</form>
+{% endblock %}

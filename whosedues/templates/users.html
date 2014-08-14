@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+<table>
+<tr>
+	<th>User</th>
+	<th>Email</th>
+</tr>
+{% for user in users%}
+<tr>
+	<td><a href="{{url_for('view_user', userid=user.id)}}">{{user.username}}</a></td>
+	<td>{{user.email}}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}

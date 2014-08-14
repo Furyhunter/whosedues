@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Add Receipt{% endblock %}
+
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+<form action="" method="post">
+{{ form.hidden_tag() }}
+{{ form.name.label }} {{ form.name(size=40) }}<br>
+{{ form.amount.label }} {{ form.amount(size=20) }}<br>
+<button type="submit">Submit</button>
+</form>
+{% endblock %}

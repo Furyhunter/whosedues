@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{% block head %}
+<!--<link rel="stylesheet" href="style.css" />-->
+<title>{% block title %}{% endblock %} &ndash; WhoseDues</title>
+{% endblock %}
+</head>
+
+<body>
+<h1>WhoseDues</h1>
+{% with messages = get_flashed_messages() %}
+	{% if messages %}
+		<ul class="flashes">
+		{% for message in messages %}
+			<li>{{ message }}</li>
+		{% endfor %}
+		</ul>
+	{% endif %}
+{% endwith %}
+{% include 'navigation.html' %}
+<div id="content">
+<h2>{{ self.title() }}</h2>
+{% block content %}{% endblock %}</div>
+<div id="footer">
+{% block footer %}
+<p>Copyright &copy; 2014 Ronald Kinard</p>
+{% endblock %}
+</div>
+</body>
+</html>

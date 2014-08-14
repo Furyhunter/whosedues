@@ -1,0 +1,12 @@
+# Ignore .pyc
+
+*.pyc
+*.sublime-workspace
+*.sublime-project
+
+# Ignore folders
+env
+__pycache__
+
+# Ignore database files
+*.db
