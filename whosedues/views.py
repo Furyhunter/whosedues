@@ -2,6 +2,7 @@ from whosedues import app, login_manager, db
 from whosedues.models import *
 from flask_login import login_required, login_user, logout_user, current_user
 from flask import render_template, request, flash, redirect, url_for, abort
+from sqlalchemy import desc
 from whosedues.forms import *
 
 
@@ -87,10 +88,8 @@ def register():
 @app.route('/user/<int:userid>')
 @login_required
 def view_user(userid):
-    u = User.query.filter_by(id=userid).first()
-    receipts = u.receipts.all()
-    if u is None:
-        abort(404)
+    u = User.query.filter_by(id=userid).first_or_404()
+    receipts = u.receipts.order_by(desc('time')).all()
 
     return render_template('view_user.html', user=u, receipts=receipts)
 
@@ -128,14 +127,14 @@ def add_receipt():
 @app.route('/receipt/all')
 @login_required
 def all_receipts():
-    receipts = Receipt.query.all()
+    receipts = Receipt.query.order_by(desc('time')).all()
     return render_template('all_receipts.html', receipts=receipts)
 
 
 @app.route('/receipt/<int:receipt_id>')
 @login_required
 def view_receipt(receipt_id):
-    receipt = Receipt.query.filter_by(id=receipt_id).first()
+    receipt = Receipt.query.filter_by(id=receipt_id).first_or_404()
     due_form = AddDueForm()
     valid_users = [(u.id, u.name) for u in User.query.order_by('name')]
     for u in valid_users:
@@ -153,7 +152,7 @@ def view_receipt(receipt_id):
 @app.route('/receipt/<int:receipt_id>/delete', methods=['GET', 'POST'])
 @login_required
 def delete_receipt(receipt_id):
-    receipt = Receipt.query.filter_by(id=receipt_id).first()
+    receipt = Receipt.query.filter_by(id=receipt_id).first_or_404()
     if receipt is None:
         abort(404)
     if request.method == 'GET':
@@ -171,18 +170,12 @@ def delete_receipt(receipt_id):
 @app.route('/receipt/<int:receipt_id>/due/add', methods=['POST'])
 @login_required
 def due_add(receipt_id):
-    receipt = Receipt.query.filter_by(id=receipt_id).first()
-    if receipt is None:
-        flash('That receipt doesn\'t exist')
-        return redirect('index')
+    receipt = Receipt.query.filter_by(id=receipt_id).first_or_404()
 
     form = AddDueForm()
     form.user.choices = [(u.id, u.name) for u in User.query.order_by('name')]
     if form.validate_on_submit():
-        u = User.query.filter_by(id=form.user.data).first()
-        if u is None:
-            flash('That user doesn\'t exist')
-            return redirect('index')
+        u = User.query.filter_by(id=form.user.data).first_or_404()
         previous_due = u.dues.filter_by(receipt_id=receipt.id).first()
         if previous_due is None:
             due = ReceiptDue(u, receipt, form.amount.data)
@@ -204,9 +197,7 @@ def due_add(receipt_id):
 
 @app.route('/pay_dues_between/<int:user_id>', methods=['GET', 'POST'])
 def pay_dues_between(user_id):
-    u = User.query.filter_by(id=user_id).first()
-    if u is None:
-        abort(404)
+    u = User.query.filter_by(id=user_id).first_or_404()
 
     balance = current_user.owed_to(u) - u.owed_to(current_user)
     if balance <= 0:
@@ -234,11 +225,47 @@ def unauthorized_callback():
     return redirect(url_for('login'))
 
 
+@app.template_filter('currency')
 def format_currency(value):
     return '${:,.2f}'.format(value)
 
 
-app.jinja_env.filters['currency'] = format_currency
+@app.template_filter('timesince')
+def friendly_time(dt, past_="ago",
+                  future_="from now",
+                  default="just now"):
+    """
+    Returns string representing "time since"
+    or "time until" e.g.
+    3 days ago, 5 hours from now etc.
+    """
+
+    now = datetime.utcnow()
+    if now > dt:
+        diff = now - dt
+        dt_is_past = True
+    else:
+        diff = dt - now
+        dt_is_past = False
+
+    periods = (
+        (diff.days / 365, "year", "years"),
+        (diff.days / 30, "month", "months"),
+        (diff.days / 7, "week", "weeks"),
+        (diff.days, "day", "days"),
+        (diff.seconds / 3600, "hour", "hours"),
+        (diff.seconds / 60, "minute", "minutes"),
+        (diff.seconds, "second", "seconds"),
+    )
+
+    for period, singular, plural in periods:
+
+        if period:
+            return "%d %s %s" % (period,
+                                 singular if period == 1 else plural,
+                                 past_ if dt_is_past else future_)
+
+    return default
 
 
 if __name__ == '__main__':

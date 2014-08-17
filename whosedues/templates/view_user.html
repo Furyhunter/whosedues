@@ -16,7 +16,7 @@
 {% endif %}
 <ul>
 {% for receipt in receipts %}
-<li>{{receipt.time}} &ndash; <a href="{{url_for('view_receipt', receipt_id=receipt.id)}}">{{receipt.name}}</a></li>
+<li>{{receipt.time|timesince}} &ndash; <a href="{{url_for('view_receipt', receipt_id=receipt.id)}}">{{receipt.name}}</a></li>
 {% endfor %}
 </ul>
 {% endblock %}
