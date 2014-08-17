@@ -17,7 +17,9 @@ def index():
                 for user in
                 User.query.filter(User.id != current_user.id).all()]
     balances = list(filter(lambda x: x[1] != 0, balances))
-    return render_template('index.html', balances=balances, total_balance=0)
+    total_balance = reduce(lambda a, i: a + i[1], balances, 0)
+    return render_template('index.html', balances=balances,
+                           total_balance=total_balance)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -27,7 +29,7 @@ def login():
         u = User.query.filter_by(username=form.username.data,
                                  password_hash=
                                  hash_password(form.username.data,
-                                    form.password.data)).first()
+                                               form.password.data)).first()
         if u is not None:
             login_user(u)
             flash('Logged in successfully.', 'info')
