@@ -13,8 +13,10 @@ class RegisterForm(Form):
     email = EmailField('Email Address', [validators.Length(min=4, max=80)])
     password = PasswordField('New Password', [
         validators.Required(),
-        validators.EqualTo('confirm', message='Passwords must match.')])
+        validators.EqualTo('confirm', message='Passwords must match.'),
+        validators.Length(min=4,max=80)])
     confirm = PasswordField('Repeat Password')
+    name = TextField('Name', [validators.Length(min=4, max=160)])
 
 
 class AddReceiptForm(Form):
@@ -23,4 +25,14 @@ class AddReceiptForm(Form):
 
 
 class AddDueForm(Form):
-    pass
+    user = SelectField('User', coerce=int)
+    amount = DecimalField('Amount', [validators.NumberRange(min=0, max=None)])
+
+
+class ChangePasswordForm(Form):
+    current = PasswordField('Current Password', [validators.Required()])
+    newpass = PasswordField('New Password', [
+        validators.Required(),
+        validators.EqualTo('confirm', message='Passwords must match.'),
+        validators.Length(min=4,max=80)])
+    confirm = PasswordField('Repeat Password')

@@ -13,7 +13,7 @@
 </tr>
 {% for user in users%}
 <tr>
-	<td><a href="{{url_for('view_user', userid=user.id)}}">{{user.username}}</a></td>
+	<td><a href="{{url_for('view_user', userid=user.id)}}">{{user.name}}</a></td>
 	<td>{{user.email}}</td>
 </tr>
 {% endfor %}

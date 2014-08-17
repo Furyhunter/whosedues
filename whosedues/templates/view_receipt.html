@@ -8,6 +8,28 @@
 {% block content %}
 <p>Total: {{receipt.amount|currency}}</p>
 <p>Dues:</p>
+<table>
+<tr>
+<th>Name</th>
+<th>Amount</th>
+<th>Paid</th>
+</tr>
+{% for d in dues %}
+<tr>
+<td>{{d.user.name}}</td>
+<td>{{d.amount|currency}}</td>
+<td>{{d.paid}}</td>
+</tr>
+{% endfor %}
+</table>
+<p>
+<form action="{{url_for('due_add', receipt_id=receipt.id)}}" method="POST"> 
+{{ due_form.hidden_tag() }}
+{{ due_form.user.label }} {{ due_form.user() }}
+{{ due_form.amount.label }} {{ due_form.amount(size=20) }}
+<button type="submit">Add Due</button><br>
+</form>
+</p>
 <form action="{{url_for('delete_receipt', receipt_id=receipt.id)}}">
 <button type="submit">Delete</button>
 </form>

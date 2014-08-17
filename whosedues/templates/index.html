@@ -6,5 +6,72 @@
 {% endblock %}
 
 {% block content %}
-<p>Home page.</p>
+<p>Total Balance In Group: {{total_balance|currency}}</p>
+
+<h3>Unpaid Receipts</h3>
+<table>
+<tr>
+<th>Receipt</th>
+<th>Amount</th>
+</tr>
+{% for r in current_user.receipts if r.paid == False %}
+<tr>
+<td>{{r.name}}</td>
+<td>{{r.amount}}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h3>Your Dues To Others</h3>
+<table>
+<tr>
+<th>Receipt</th>
+<th>Posted by</th>
+<th>Amount</th>
+</tr>
+{% for due in current_user.dues if due.paid == False %}
+<tr>
+<td>{{due.receipt.name}}</td>
+<td>{{due.receipt.user.name}}</td>
+<td>{{due.amount|currency}}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h3>Others' Dues to You</h3>
+<table>
+<tr>
+<th>User</th>
+<th>Receipt</th>
+<th>Amount</th>
+</tr>
+{% for receipt in current_user.receipts if receipt.paid == False %}
+{% for due in receipt.dues if due.paid == False %}
+<tr>
+<td>{{due.user.name}}</td>
+<td>{{due.receipt.name}}</td>
+<td>{{due.amount|currency}}</td>
+</tr>
+{% endfor %}
+{% endfor %}
+</table>
+
+
+<h3>Balances</h3>
+<table>
+<tr>
+<th>To User</th>
+<th>Amount Owed</th>
+<th>Pay</th>
+</tr>
+{% for b in balances %}
+<tr>
+<td>{{b[0].name}}</td>
+<td>{{b[1]|currency}}</td>
+<td>
+<a href="{{url_for('pay_dues_between', user_id=b[0].id)}}">Pay</a>
+</td>
+</tr>
+{% endfor %}
+</table>
 {% endblock %}

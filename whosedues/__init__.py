@@ -8,12 +8,10 @@ login_manager = LoginManager(app)
 db = SQLAlchemy(app)
 db.init_app(app)
 
-login_manager.login_view = 'login'
-login_manager.login_message = 'You are not currently logged in.'
-login_manager.login_message_category = 'info'
-
+login_manager.init_app(app)
 configure(app)
 
 
 import whosedues.views
+import whosedues.views_admin
 import whosedues.models

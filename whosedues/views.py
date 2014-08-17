@@ -5,14 +5,19 @@ from flask import render_template, request, flash, redirect, url_for, abort
 from whosedues.forms import *
 
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-
 @login_manager.user_loader
 def load_user(userid):
     return User.query.get(int(userid))
+
+
+@app.route('/')
+@login_required
+def index():
+    balances = [(user, current_user.owed_to(user) - user.owed_to(current_user))
+                for user in
+                User.query.filter(User.id != current_user.id).all()]
+    balances = list(filter(lambda x: x[1] != 0, balances))
+    return render_template('index.html', balances=balances, total_balance=0)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -21,7 +26,8 @@ def login():
     if form.validate_on_submit():
         u = User.query.filter_by(username=form.username.data,
                                  password_hash=
-                                 hash_password(form.password.data)).first()
+                                 hash_password(form.username.data,
+                                    form.password.data)).first()
         if u is not None:
             login_user(u)
             flash('Logged in successfully.', 'info')
@@ -32,6 +38,7 @@ def login():
 
 
 @app.route('/logout')
+@login_required
 def logout():
     logout_user()
     flash('You have logged out.', 'info')
@@ -39,6 +46,7 @@ def logout():
 
 
 @app.route('/user/all')
+@login_required
 def all_users():
     users = User.query.all()
     return render_template('users.html', users=users)
@@ -50,20 +58,32 @@ def register():
         flash('You cannot register for an account while logged in.', 'error')
         return redirect(url_for('index'))
 
+    if app.config['REGISTRATIONS_OPEN'] is False:
+        flash('Registrations are closed.', 'error')
+        return redirect(url_for('index'))
+
     form = RegisterForm()
     if form.validate_on_submit():
         u = User(form.username.data,
                  form.password.data,
-                 form.email.data)
+                 form.email.data,
+                 form.name.data)
         db.session.add(u)
         db.session.commit()
+        if len(User.query.all()) == 1:
+            u.admin = True
+            db.session.add(u)
+            db.session.commit()
+            flash('As first user, you are automatically set as admin.', 'info')
         flash('Registered successfully', 'info')
+        login_user(u)
         return redirect(url_for('index'))
 
     return render_template('register.html', form=form)
 
 
 @app.route('/user/<int:userid>')
+@login_required
 def view_user(userid):
     u = User.query.filter_by(id=userid).first()
     receipts = u.receipts.all()
@@ -71,6 +91,24 @@ def view_user(userid):
         abort(404)
 
     return render_template('view_user.html', user=u, receipts=receipts)
+
+
+@app.route('/user/change_password', methods=['GET', 'POST'])
+@login_required
+def user_change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        hash_current = hash_password(current_user.username, form.current.data)
+        if hash_current != current_user.password_hash:
+            flash('Current password was invalid', 'error')
+            return redirect(url_for('user_change_password'))
+        current_user.password_hash = hash_password(
+            current_user.username, form.newpass.data)
+        db.session.add(current_user)
+        db.session.commit()
+        flash('Password changed successfully.', 'info')
+        return redirect(url_for('index'))
+    return render_template('change_password.html', form=form)
 
 
 @app.route('/receipt/add', methods=['GET', 'POST'])
@@ -86,20 +124,32 @@ def add_receipt():
 
 
 @app.route('/receipt/all')
+@login_required
 def all_receipts():
     receipts = Receipt.query.all()
     return render_template('all_receipts.html', receipts=receipts)
 
 
 @app.route('/receipt/<int:receipt_id>')
+@login_required
 def view_receipt(receipt_id):
     receipt = Receipt.query.filter_by(id=receipt_id).first()
+    due_form = AddDueForm()
+    valid_users = [(u.id, u.name) for u in User.query.order_by('name')]
+    for u in valid_users:
+        if u[0] == current_user.id:
+            valid_users.remove(u)
+    due_form.user.choices = valid_users
+    dues = receipt.dues.all()
+
     if receipt is None:
         abort(404)
-    return render_template('view_receipt.html', receipt=receipt)
+    return render_template('view_receipt.html', receipt=receipt,
+                           due_form=due_form, dues=dues)
 
 
 @app.route('/receipt/<int:receipt_id>/delete', methods=['GET', 'POST'])
+@login_required
 def delete_receipt(receipt_id):
     receipt = Receipt.query.filter_by(id=receipt_id).first()
     if receipt is None:
@@ -107,11 +157,79 @@ def delete_receipt(receipt_id):
     if request.method == 'GET':
         return render_template('confirm_delete_receipt.html', receipt=receipt)
 
+    for d in dues:
+        db.session.delete(d)
     db.session.delete(receipt)
     db.session.commit()
     return redirect(
         request.args.get('next') or url_for('view_user',
                                             userid=current_user.id))
+
+
+@app.route('/receipt/<int:receipt_id>/due/add', methods=['POST'])
+@login_required
+def due_add(receipt_id):
+    receipt = Receipt.query.filter_by(id=receipt_id).first()
+    if receipt is None:
+        flash('That receipt doesn\'t exist')
+        return redirect('index')
+
+    form = AddDueForm()
+    form.user.choices = [(u.id, u.name) for u in User.query.order_by('name')]
+    if form.validate_on_submit():
+        u = User.query.filter_by(id=form.user.data).first()
+        if u is None:
+            flash('That user doesn\'t exist')
+            return redirect('index')
+        previous_due = u.dues.filter_by(receipt_id=receipt.id).first()
+        if previous_due is None:
+            due = ReceiptDue(u, receipt, form.amount.data)
+            db.session.add(due)
+            db.session.commit()
+            flash('Due created successfully')
+        else:
+            previous_due.amount = form.amount.data
+            db.session.add(previous_due)
+            db.session.commit()
+            flash('Due updated successfully')
+    else:
+        flash('Form not filled out')
+
+    return redirect(
+        request.args.get(
+            'next', url_for('view_receipt', receipt_id=receipt_id)))
+
+
+@app.route('/pay_dues_between/<int:user_id>', methods=['GET', 'POST'])
+def pay_dues_between(user_id):
+    u = User.query.filter_by(id=user_id).first()
+    if u is None:
+        abort(404)
+
+    balance = current_user.owed_to(u) - u.owed_to(current_user)
+    if balance <= 0:
+        flash('You do not need to pay that user at this time.')
+        return redirect(url_for('index'))
+    if request.method == 'GET':
+        return render_template('pay_dues_between.html', user=u, balance=balance)
+
+    their_unpaid_dues = list(filter(lambda b: b.receipt.user == current_user,
+                               u.dues.filter_by(paid=False)))
+    my_unpaid_dues = list(filter(lambda b: b.receipt.user == u,
+                            current_user.dues.filter_by(paid=False)))
+    for d in their_unpaid_dues + my_unpaid_dues:
+        d.paid = True
+        db.session.add(d)
+    db.session.commit()
+
+    flash('All dues between the targets have been marked as paid.', 'info')
+    return redirect(url_for('index'))
+
+
+@login_manager.unauthorized_handler
+def unauthorized_callback():
+    flash('You must be logged in.')
+    return redirect(url_for('login'))
 
 
 def format_currency(value):

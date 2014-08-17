@@ -6,7 +6,14 @@
 {% endblock %}
 
 {% block content %}
-<p>User: <a href="mailto:{{user.email}}"><b>{{user.username}}</b></a></p>
+<p>User: <a href="mailto:{{user.email}}"><b>{{user.name}}</b></a> ({{user.username}})</p>
+<img src="{{user.get_gravatar_src()}}" />
+{% if current_user == user %}
+<p>User Admin:</p>
+<ul>
+<li><a href="{{url_for('user_change_password')}}">Change password</a></li>
+</ul>
+{% endif %}
 <ul>
 {% for receipt in receipts %}
 <li>{{receipt.time}} &ndash; <a href="{{url_for('view_receipt', receipt_id=receipt.id)}}">{{receipt.name}}</a></li>

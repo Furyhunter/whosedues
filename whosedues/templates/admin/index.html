@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Admin Home{% endblock %}
+
+{% block head %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+<h2>Users</h2>
+<table>
+<tr>
+<th>User</th>
+<th>Name</th>
+<th>Email</th>
+<th>Delete</th>
+<th>Admin</th>
+</tr>
+{% for u in users %}
+<tr>
+<td>{{u.id}}:{{u.username}}</td>
+<td>{{u.name}}</td>
+<td>{{u.email}}</td>
+<td>
+{% if u != current_user %}
+<form action="{{url_for('admin_delete_user')}}" method="post">
+<input type="hidden" name="user_id" value="{{u.id}}">
+<input type="submit" value="Delete">
+</form>
+{% endif %}
+</td>
+
+<td>
+{% if u != current_user %}
+<form action="{{url_for('admin_set_admin')}}" method="post">
+<input type="hidden" name="user_id" value="{{u.id}}">
+<input type="hidden" name="admin" value="{{ not u.admin }}">
+<input type="submit" value="Set {{ not u.admin }}">
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}
