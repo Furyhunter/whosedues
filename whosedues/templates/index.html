@@ -69,7 +69,9 @@
 <td>{{b[0].name}}</td>
 <td>{{b[1]|currency}}</td>
 <td>
+{% if b[1] > 0 %}
 <a href="{{url_for('pay_dues_between', user_id=b[0].id)}}">Pay</a>
+{% endif %}
 </td>
 </tr>
 {% endfor %}
