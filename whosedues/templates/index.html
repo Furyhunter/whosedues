@@ -13,11 +13,13 @@
 <tr>
 <th>Receipt</th>
 <th>Amount</th>
+<th>Time</th>
 </tr>
-{% for r in current_user.receipts if r.paid == False %}
+{% for r in current_user.receipts.order_by('time') if r.paid == False %}
 <tr>
-<td>{{r.name}}</td>
-<td>{{r.amount}}</td>
+<td><a href="{{url_for('view_receipt', receipt_id=r.id)}}">{{r.name}}</a></td>
+<td>{{r.amount|currency}}</td>
+<td>{{r.time|timesince}}</td>
 </tr>
 {% endfor %}
 </table>
