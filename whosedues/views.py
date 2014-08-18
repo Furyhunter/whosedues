@@ -177,7 +177,14 @@ def due_add(receipt_id):
     if form.validate_on_submit():
         u = User.query.filter_by(id=form.user.data).first_or_404()
         previous_due = u.dues.filter_by(receipt_id=receipt.id).first()
-        if previous_due is None:
+
+        if form.amount.data == 0 and previous_due is not None:
+            db.session.delete(previous_due)
+            db.session.commit()
+            flash('Due removed successfully')
+        elif form.amount.data == 0 and previous_due is None:
+            flash('Nothing to do.')
+        elif previous_due is None:
             due = ReceiptDue(u, receipt, form.amount.data)
             db.session.add(due)
             db.session.commit()
