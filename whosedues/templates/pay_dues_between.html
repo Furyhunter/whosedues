@@ -8,6 +8,6 @@
 {% block content %}
 <p>This will mark all dues between {{current_user.name}} and {{user.name}}. {{current_user.name}} should pay {{user.name}} {{balance|currency}} in full. Are you sure you wish to do this?</p>
 <form action="" method="post">
-<button type="submit">Pay All Dues</button>
+<button type="submit" class="btn btn-danger">Pay All Dues</button>
 </form>
 {% endblock %}
