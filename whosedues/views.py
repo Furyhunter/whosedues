@@ -33,10 +33,10 @@ def login():
                                                form.password.data)).first()
         if u is not None:
             login_user(u)
-            flash('Logged in successfully.', 'info')
+            flash('Logged in successfully.', 'success')
             return redirect(request.args.get('next') or url_for('index'))
         else:
-            flash('Invalid credentials.', 'error')
+            flash('Invalid credentials.', 'danger')
     return render_template('login.html', form=form)
 
 
@@ -44,7 +44,7 @@ def login():
 @login_required
 def logout():
     logout_user()
-    flash('You have logged out.', 'info')
+    flash('You have logged out.', 'success')
     return redirect(url_for('login'))
 
 
@@ -58,11 +58,11 @@ def all_users():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_active():
-        flash('You cannot register for an account while logged in.', 'error')
+        flash('You cannot register for an account while logged in.', 'danger')
         return redirect(url_for('index'))
 
     if app.config['REGISTRATIONS_OPEN'] is False:
-        flash('Registrations are closed.', 'error')
+        flash('Registrations are closed.', 'danger')
         return redirect(url_for('index'))
 
     form = RegisterForm()
@@ -78,7 +78,7 @@ def register():
             db.session.add(u)
             db.session.commit()
             flash('As first user, you are automatically set as admin.', 'info')
-        flash('Registered successfully', 'info')
+        flash('Registered successfully', 'success')
         login_user(u)
         return redirect(url_for('index'))
 
@@ -101,13 +101,13 @@ def user_change_password():
     if form.validate_on_submit():
         hash_current = hash_password(current_user.username, form.current.data)
         if hash_current != current_user.password_hash:
-            flash('Current password was invalid', 'error')
+            flash('Current password was invalid', 'danger')
             return redirect(url_for('user_change_password'))
         current_user.password_hash = hash_password(
             current_user.username, form.newpass.data)
         db.session.add(current_user)
         db.session.commit()
-        flash('Password changed successfully.', 'info')
+        flash('Password changed successfully.', 'success')
         return redirect(url_for('index'))
     return render_template('change_password.html', form=form)
 
@@ -181,21 +181,21 @@ def due_add(receipt_id):
         if form.amount.data == 0 and previous_due is not None:
             db.session.delete(previous_due)
             db.session.commit()
-            flash('Due removed successfully')
+            flash('Due removed successfully', 'success')
         elif form.amount.data == 0 and previous_due is None:
             flash('Nothing to do.')
         elif previous_due is None:
             due = ReceiptDue(u, receipt, form.amount.data)
             db.session.add(due)
             db.session.commit()
-            flash('Due created successfully')
+            flash('Due created successfully', 'success')
         else:
             previous_due.amount = form.amount.data
             db.session.add(previous_due)
             db.session.commit()
-            flash('Due updated successfully')
+            flash('Due updated successfully', 'success')
     else:
-        flash('Form not filled out')
+        flash('Form not filled out', 'danger')
 
     return redirect(
         request.args.get(
@@ -208,7 +208,7 @@ def pay_dues_between(user_id):
 
     balance = current_user.owed_to(u) - u.owed_to(current_user)
     if balance <= 0:
-        flash('You do not need to pay that user at this time.')
+        flash('You do not need to pay that user at this time.', 'warning')
         return redirect(url_for('index'))
     if request.method == 'GET':
         return render_template('pay_dues_between.html', user=u, balance=balance)
@@ -222,13 +222,13 @@ def pay_dues_between(user_id):
         db.session.add(d)
     db.session.commit()
 
-    flash('All dues between the targets have been marked as paid.', 'info')
+    flash('All dues between the targets have been marked as paid.', 'success')
     return redirect(url_for('index'))
 
 
 @login_manager.unauthorized_handler
 def unauthorized_callback():
-    flash('You must be logged in.')
+    flash('You must be logged in.', 'danger')
     return redirect(url_for('login'))
 
 

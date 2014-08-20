@@ -2,29 +2,41 @@
 <html lang="en">
 <head>
 {% block head %}
-<!--<link rel="stylesheet" href="style.css" />-->
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap.min.css')}}">
+<link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap-theme.min.css')}}">
 <title>{% block title %}{% endblock %} &ndash; WhoseDues</title>
 {% endblock %}
 </head>
 
-<body>
-<h1>WhoseDues</h1>
-{% with messages = get_flashed_messages() %}
-	{% if messages %}
-		<ul class="flashes">
-		{% for message in messages %}
-			<li>{{ message }}</li>
-		{% endfor %}
-		</ul>
-	{% endif %}
-{% endwith %}
+<body style="padding-top: 50px;">
+
+<div class="container">
+<h1>{{ self.title() }}</h1>
 {% include 'navigation.html' %}
-<div id="content">
-<h2>{{ self.title() }}</h2>
-{% block content %}{% endblock %}</div>
+{% with messages = get_flashed_messages(with_categories=True) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="alert alert-{{category}}" role="alert">
+{{message}}
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+<div>
+{% block content %}{% endblock %}
+
+
 <div id="footer">
 {% block footer %}
 <p>Copyright &copy; 2014 Ronald Kinard. <a href="https://github.com/Furyhunter/whosedues">This application is open source.</a></p>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script src="{{url_for('static', filename='js/bootstrap.min.js')}}"></script>
 {% endblock %}
 </div>
 </body>

@@ -6,13 +6,23 @@
 {% endblock %}
 
 {% block content %}
-<form action="" method="post">
+<form action="" method="post" role="form">
 {{ form.hidden_tag() }}
-{{ form.username.label }} {{ form.username(size=20) }}<br>
-{{ form.email.label }} {{ form.email(size=40) }}<br>
-{{ form.password.label }} {{ form.password(size=20) }}<br>
-{{ form.confirm.label }} {{ form.confirm(size=20) }}<br>
-{{ form.name.label }} {{ form.name(size=20) }}<br>
+<div class="form-group">
+{{ form.username.label }} {{ form.username(class_="form-control") }}
+</div>
+<div class="form-group">
+{{ form.email.label }} {{ form.email(class_="form-control") }}
+</div>
+<div class="form-group">
+{{ form.password.label }} {{ form.password(class_="form-control") }}
+</div>
+<div class="form-group">
+{{ form.confirm.label }} {{ form.confirm(class_="form-control") }}
+</div>
+<div class="form-group">
+{{ form.name.label }} {{ form.name(class_="form-control") }}
+</div>
 <button type="submit">Register</button>
 </form>
 {% endblock %}

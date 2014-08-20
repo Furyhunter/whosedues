@@ -6,13 +6,34 @@
 {% endblock %}
 
 {% block content %}
-<form action="" method="post">
+<form action="" method="post" class="form-horizontal">
 {{ form.hidden_tag() }}
-{{ form.username.label }} {{ form.username(size=20) }}
-{{ form.password.label }} {{ form.password(size=20) }}
-<button type="submit">Log in</button>
-</form>
+
+<div class="form-group">
+{{ form.username.label(class_='col-sm-2 control-label') }}
+
+<div class="col-sm-3">
+{{ form.username(class_='form-control')}}
+</div>
+
+</div>
+
+<div class="form-group">
+{{ form.password.label(class_='col-sm-2 control-label') }}
+
+<div class="col-sm-3">
+{{ form.password(class_='form-control') }}
+</div>
+
+</div>
+
+<div class="form-group">
+<div class="col-sm-offset-2 col-sm-3">
+<button type="submit" class="btn btn-primary">Log in</button>
 {% if config['REGISTRATIONS_OPEN'] == True %}
-<a href="{{url_for('register')}}">Register</a>
+<a class="btn btn-default" href="{{url_for('register')}}">Register</a>
 {% endif %}
+</div>
+</div>
+</form>
 {% endblock %}

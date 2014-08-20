@@ -8,7 +8,7 @@
 {% block content %}
 <p>Total: {{receipt.amount|currency}}</p>
 <p>Dues:</p>
-<table>
+<table class="table">
 <tr>
 <th>Name</th>
 <th>Amount</th>
@@ -23,14 +23,23 @@
 {% endfor %}
 </table>
 <p>
-<form action="{{url_for('due_add', receipt_id=receipt.id)}}" method="POST"> 
+<form action="{{url_for('due_add', receipt_id=receipt.id)}}" method="POST" role="form" class="form form-inline"> 
 {{ due_form.hidden_tag() }}
-{{ due_form.user.label }} {{ due_form.user() }}
-{{ due_form.amount.label }} {{ due_form.amount(size=20) }}
-<button type="submit">Add Due</button><br>
+
+<div class="form-group">
+{{ due_form.user.label }} {{ due_form.user(class_='form-control') }}
+</div>
+
+<div class="form-group">
+{{ due_form.amount.label }} {{ due_form.amount(class_='form-control') }}
+</div>
+
+<button type="submit" class="btn btn-primary">Add Due</button>
 </form>
 </p>
-<form action="{{url_for('delete_receipt', receipt_id=receipt.id)}}">
-<button type="submit">Delete</button>
+<form action="{{url_for('delete_receipt', receipt_id=receipt.id)}}" class="form" role="form">
+<div class="form-group">
+<button type="submit" class="btn btn-danger">Delete Receipt</button>
+</div>
 </form>
 {% endblock %}
