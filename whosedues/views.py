@@ -178,8 +178,6 @@ def delete_receipt(receipt_id):
 def due_add(receipt_id):
     receipt = Receipt.query.filter_by(id=receipt_id).first_or_404()
 
-    if receipt is None:
-        abort(404)
     if receipt.user != current_user:
         abort(403)
 
@@ -194,9 +192,12 @@ def due_add(receipt_id):
             total_due -= previous_due.amount
 
         if form.amount.data == 0 and previous_due is not None:
-            db.session.delete(previous_due)
-            db.session.commit()
-            flash('Due removed successfully', 'success')
+            if previous_due.paid:
+                flash('You cannot modify a paid due.', 'danger')
+            else:
+                db.session.delete(previous_due)
+                db.session.commit()
+                flash('Due removed successfully', 'success')
         elif form.amount.data == 0 and previous_due is None:
             flash('Nothing to do.')
         elif previous_due is None:
@@ -209,7 +210,9 @@ def due_add(receipt_id):
                 db.session.commit()
                 flash('Due created successfully', 'success')
         else:
-            if form.amount.data > receipt.amount - total_due:
+            if previous_due.paid:
+                flash('You cannot modify a paid due.', 'danger')
+            elif form.amount.data > receipt.amount - total_due:
                 flash('Amount entered greater than remaining due: %.2f'
                     % (receipt.amount - total_due), 'danger')
             else:
