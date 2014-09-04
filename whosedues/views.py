@@ -135,6 +135,9 @@ def all_receipts():
 @login_required
 def view_receipt(receipt_id):
     receipt = Receipt.query.filter_by(id=receipt_id).first_or_404()
+
+    total_dues = reduce(lambda x, y: x + y.amount, receipt.dues.all(), 0)
+
     due_form = AddDueForm()
     valid_users = [(u.id, u.name) for u in User.query.order_by('name')]
     for u in valid_users:
@@ -146,7 +149,8 @@ def view_receipt(receipt_id):
     if receipt is None:
         abort(404)
     return render_template('view_receipt.html', receipt=receipt,
-                           due_form=due_form, dues=dues)
+                           due_form=due_form, dues=dues,
+                           total_dues=total_dues)
 
 
 @app.route('/receipt/<int:receipt_id>/delete', methods=['GET', 'POST'])
@@ -185,6 +189,10 @@ def due_add(receipt_id):
         u = User.query.filter_by(id=form.user.data).first_or_404()
         previous_due = u.dues.filter_by(receipt_id=receipt.id).first()
 
+        total_due = reduce(lambda x, y: x + y.amount, receipt.dues.all(), 0)
+        if previous_due is not None:
+            total_due -= previous_due.amount
+
         if form.amount.data == 0 and previous_due is not None:
             db.session.delete(previous_due)
             db.session.commit()
@@ -192,15 +200,23 @@ def due_add(receipt_id):
         elif form.amount.data == 0 and previous_due is None:
             flash('Nothing to do.')
         elif previous_due is None:
-            due = ReceiptDue(u, receipt, form.amount.data)
-            db.session.add(due)
-            db.session.commit()
-            flash('Due created successfully', 'success')
+            if form.amount.data > receipt.amount - total_due:
+                flash('Amount entered greater than remaining due: %.2f'
+                    % (receipt.amount - total_due), 'danger')
+            else:
+                due = ReceiptDue(u, receipt, form.amount.data)
+                db.session.add(due)
+                db.session.commit()
+                flash('Due created successfully', 'success')
         else:
-            previous_due.amount = form.amount.data
-            db.session.add(previous_due)
-            db.session.commit()
-            flash('Due updated successfully', 'success')
+            if form.amount.data > receipt.amount - total_due:
+                flash('Amount entered greater than remaining due: %.2f'
+                    % (receipt.amount - total_due), 'danger')
+            else:
+                previous_due.amount = form.amount.data
+                db.session.add(previous_due)
+                db.session.commit()
+                flash('Due updated successfully', 'success')
     else:
         flash('Form not filled out', 'danger')
 

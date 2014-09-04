@@ -7,6 +7,8 @@
 
 {% block content %}
 <p>Total: {{receipt.amount|currency}}</p>
+<p>Distributed amount in dues: {{total_dues|currency}}</p>
+<p>Amount remaining to distribute: {{(receipt.amount - total_dues)|currency}}</p>
 <p>Dues:</p>
 <table class="table">
 <tr>
