@@ -22,6 +22,7 @@
 </tr>
 {% endfor %}
 </table>
+{% if receipt.user == current_user %}
 <p>
 <form action="{{url_for('due_add', receipt_id=receipt.id)}}" method="POST" role="form" class="form form-inline"> 
 {{ due_form.hidden_tag() }}
@@ -42,4 +43,5 @@
 <button type="submit" class="btn btn-danger">Delete Receipt</button>
 </div>
 </form>
+{% endif %}
 {% endblock %}

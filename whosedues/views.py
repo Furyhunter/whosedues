@@ -155,6 +155,8 @@ def delete_receipt(receipt_id):
     receipt = Receipt.query.filter_by(id=receipt_id).first_or_404()
     if receipt is None:
         abort(404)
+    if receipt.user != current_user:
+        abort(403)
     if request.method == 'GET':
         return render_template('confirm_delete_receipt.html', receipt=receipt)
 
@@ -171,6 +173,11 @@ def delete_receipt(receipt_id):
 @login_required
 def due_add(receipt_id):
     receipt = Receipt.query.filter_by(id=receipt_id).first_or_404()
+
+    if receipt is None:
+        abort(404)
+    if receipt.user != current_user:
+        abort(403)
 
     form = AddDueForm()
     form.user.choices = [(u.id, u.name) for u in User.query.order_by('name')]
